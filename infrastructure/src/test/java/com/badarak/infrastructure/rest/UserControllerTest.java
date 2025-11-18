@@ -91,6 +91,6 @@ class UserControllerTest {
         mockMvc.perform(put("/api/users/{id}", id)
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(user)))
-                .andExpect(status().isAccepted());
+                .andExpect(status().isOk());
     }
 }
