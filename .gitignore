@@ -1,3 +1,10 @@
-# Project exclude paths
-/domain/target/
-/infrastructure/target/
+# Maven
+target/
+**/target/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
