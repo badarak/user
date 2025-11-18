@@ -22,15 +22,21 @@ public class UserController {
         this.userService = new UserService(repository);
     }
 
+    @PostMapping("")
+    public ResponseEntity<User> create(@RequestBody User user) {
+        return status(HttpStatus.CREATED)
+                .body(userService.createUser(user));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<User> get(@PathVariable("id") UUID id) {
         return ok(userService.findById(id));
     }
 
-    @PostMapping("")
-    public ResponseEntity<User> create(@RequestBody User user) {
-        return status(HttpStatus.CREATED)
-                .body(userService.createUser(user));
+    @PutMapping("/{id}")
+    public ResponseEntity<User> update(@PathVariable("id") UUID id, @RequestBody CreateUserRequest req) {
+        return status(HttpStatus.ACCEPTED)
+                .body(userService.updateUser(id, req.name, req.email));
     }
 
     @DeleteMapping("/{id}")
@@ -38,4 +44,8 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    public record CreateUserRequest(String name, String email) {
+    }
+
 }

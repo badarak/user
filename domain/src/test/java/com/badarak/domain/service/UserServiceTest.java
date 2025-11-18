@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Optional.of;
+import static java.util.UUID.fromString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,5 +69,18 @@ class UserServiceTest {
         userService.deleteUser(id);
 
         verify(repository, times(1)).deleteById(id);
+    }
+
+    @Test
+    void should_update_user() {
+        //Given
+        UUID id = fromString("13d6c8b9-785d-44b1-aded-320e3eed4d81");
+        User user = new User(id, "test", "test@gmail.com");
+
+        when(repository.findById(id)).thenReturn(of(user));
+
+        //When
+        userService.updateUser(id, "new_name", "new_email@gmail.com");
+        verify(repository, times(1)).save(new User(id, "new_name", "new_email@gmail.com"));
     }
 }

@@ -31,6 +31,13 @@ public class UserService implements UserServicePort {
         repository.deleteById(id);
     }
 
+    @Override
+    public User updateUser(UUID id, String name, String email) {
+        User user = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + id));
+
+        return repository.save(new User(user.getId(), name, email));
+    }
+
     private UUID generateId() {
         return UUID.randomUUID();
     }

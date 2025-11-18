@@ -7,13 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.UUID.fromString;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 class UserControllerTest {
-    @MockBean
+    @MockitoBean
     private UserRepositoryPort repository;
     @Autowired
     private MockMvc mockMvc;
@@ -72,5 +73,24 @@ class UserControllerTest {
         //When
         mockMvc.perform(delete("/api/users/{id}", id))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void should_update_user() throws Exception {
+        //Given
+        UUID id = fromString("8a8bd2cc-caa6-4fb3-9ad4-2244393cb608");
+        Mockito.when(repository.findById(id)).thenReturn(of(new User(id, "name", "test@gmail.com")));
+
+        User user = new User(
+                id,
+                "new_name",
+                "new_test@gmail.com"
+        );
+
+        // When && Then
+        mockMvc.perform(put("/api/users/{id}", id)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(user)))
+                .andExpect(status().isAccepted());
     }
 }

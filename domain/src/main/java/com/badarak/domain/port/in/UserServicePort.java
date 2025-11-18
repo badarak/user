@@ -9,4 +9,6 @@ public interface UserServicePort {
     User createUser(User user);
 
     void deleteUser(UUID uuid);
+
+    User updateUser(UUID id, String name, String email);
 }
