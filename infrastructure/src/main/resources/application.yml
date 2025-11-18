@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/users
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      jakarta.persistence.jdbc.time_zone: UTC
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
