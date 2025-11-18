@@ -5,14 +5,14 @@ import com.badarak.domain.model.User;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Optional.of;
 import static java.util.UUID.fromString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -51,14 +51,15 @@ class UserServiceTest {
 
     @Test
     void should_create_user() {
-        //Given
-        User user = new User(null, "test", "test@gmail.com");
+        //When
+        userService.createUser("test", "test@gmail.com");
 
-        //When & Then
-        userService.createUser(user);
-
-
-        verify(repository, times(1)).save(user);
+        //Then
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repository, times(1)).save(captor.capture());
+        assertEquals("test", captor.getValue().getName());
+        assertEquals("test@gmail.com", captor.getValue().getEmail());
+        assertNotNull(captor.getValue().getId());
     }
 
     @Test
@@ -76,11 +77,16 @@ class UserServiceTest {
         //Given
         UUID id = fromString("13d6c8b9-785d-44b1-aded-320e3eed4d81");
         User user = new User(id, "test", "test@gmail.com");
-
         when(repository.findById(id)).thenReturn(of(user));
 
         //When
         userService.updateUser(id, "new_name", "new_email@gmail.com");
-        verify(repository, times(1)).save(new User(id, "new_name", "new_email@gmail.com"));
+
+        //Then
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repository, times(1)).save(captor.capture());
+        assertEquals("new_name", captor.getValue().getName());
+        assertEquals("new_email@gmail.com", captor.getValue().getEmail());
+        assertEquals(id, captor.getValue().getId());
     }
 }

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public interface UserServicePort {
     User findById(UUID id);
-    User createUser(User user);
+    User createUser(String name, String email);
 
     void deleteUser(UUID uuid);
 

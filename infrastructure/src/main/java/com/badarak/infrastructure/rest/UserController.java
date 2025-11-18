@@ -22,15 +22,10 @@ public class UserController {
         this.userService = new UserService(repository);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> get(@PathVariable("id") UUID id) {
-        return ok(userService.findById(id));
-    }
-
     @PostMapping("")
-    public ResponseEntity<User> create(@RequestBody User user) {
+    public ResponseEntity<User> create(@RequestBody CreateUserRequest req) {
         return status(HttpStatus.CREATED)
-                .body(userService.createUser(user));
+                .body(userService.createUser(req.name, req.email));
     }
 
     @GetMapping("/{id}")

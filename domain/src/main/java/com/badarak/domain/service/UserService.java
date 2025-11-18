@@ -22,8 +22,8 @@ public class UserService implements UserServicePort {
     }
 
     @Override
-    public User createUser(User user) {
-        return repository.save(new User(generateId(), user.getName(), user.getEmail()));
+    public User createUser(String name, String email) {
+        return repository.save(new User(UUID.randomUUID(), name, email));
     }
 
     @Override
@@ -36,9 +36,5 @@ public class UserService implements UserServicePort {
         User existing = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + id));
 
         return repository.save(new User(existing.getId(), name, email));
-    }
-
-    private UUID generateId() {
-        return UUID.randomUUID();
     }
 }
