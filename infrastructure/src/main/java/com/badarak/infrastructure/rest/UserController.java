@@ -17,7 +17,7 @@ import static org.springframework.http.ResponseEntity.status;
 
 @RestController
 @RequestMapping("/api/users")
-public class UserController {
+public final class UserController implements UserControllerDocumentation {
     private final UserServicePort userService;
 
     public UserController(UserRepositoryPort repository) {
@@ -25,28 +25,33 @@ public class UserController {
     }
 
     @PostMapping("")
+    @Override
     public ResponseEntity<User> create(@RequestBody CreateUserRequest req) {
         return status(HttpStatus.CREATED)
                 .body(userService.createUser(req.name, req.email));
     }
 
     @GetMapping("/{id}")
+    @Override
     public ResponseEntity<User> get(@PathVariable("id") UUID id) {
         return ok(userService.findById(id));
     }
 
     @PutMapping("/{id}")
+    @Override
     public ResponseEntity<User> update(@PathVariable("id") UUID id, @RequestBody CreateUserRequest req) {
         return ok(userService.updateUser(id, req.name, req.email));
     }
 
     @DeleteMapping("/{id}")
+    @Override
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("")
+    @Override
     public ResponseEntity<Page<User>> list(Pageable pageable) {
         return ok(userService.listUsers(pageable));
     }
