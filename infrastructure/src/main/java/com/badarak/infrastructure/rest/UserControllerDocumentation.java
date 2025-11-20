@@ -1,7 +1,5 @@
 package com.badarak.infrastructure.rest;
 
-import com.badarak.domain.model.User;
-import com.badarak.infrastructure.rest.UserController.CreateUserRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,20 +22,20 @@ public sealed interface UserControllerDocumentation permits UserController {
             @ApiResponse(responseCode = "200", description = "Successful operation"),
             @ApiResponse(responseCode = "500", description = "Internal Server Error")
     })
-    ResponseEntity<Page<User>> list(Pageable pageable);
+    ResponseEntity<Page<UserResponse>> list(Pageable pageable);
 
     @Operation(summary = "Get a user by his identifiant")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Get user successfully"),
             @ApiResponse(responseCode = "404", description = "Not found user"),
     })
-    ResponseEntity<User> get(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id);
+    ResponseEntity<UserResponse> get(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id);
 
     @Operation(summary = "Create a new user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User created successfully")
     })
-    ResponseEntity<User> create(CreateUserRequest user);
+    ResponseEntity<UserResponse> create(CreateOrUpdateUserRequest user);
 
     @Operation(summary = "Update the given user")
     @ApiResponses(value = {
@@ -45,7 +43,7 @@ public sealed interface UserControllerDocumentation permits UserController {
             @ApiResponse(responseCode = "404", description = "Not found user")
 
     })
-    ResponseEntity<User> update(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id, CreateUserRequest createUserRequest);
+    ResponseEntity<UserResponse> update(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id, CreateOrUpdateUserRequest createUserRequest);
 
     @Operation(summary = "Delete the given user")
     @ApiResponses(value = {

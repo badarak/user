@@ -1,6 +1,5 @@
 package com.badarak.infrastructure.rest;
 
-import com.badarak.domain.model.User;
 import com.badarak.domain.port.in.UserServicePort;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import com.badarak.domain.service.UserService;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+import static com.badarak.infrastructure.rest.UserResponse.of;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 
@@ -26,21 +26,21 @@ public final class UserController implements UserControllerDocumentation {
 
     @PostMapping("")
     @Override
-    public ResponseEntity<User> create(@RequestBody CreateUserRequest req) {
+    public ResponseEntity<UserResponse> create(@RequestBody CreateOrUpdateUserRequest req) {
         return status(HttpStatus.CREATED)
-                .body(userService.createUser(req.name, req.email));
+                .body(of(userService.createUser(req.name(), req.email())));
     }
 
     @GetMapping("/{id}")
     @Override
-    public ResponseEntity<User> get(@PathVariable("id") UUID id) {
-        return ok(userService.findById(id));
+    public ResponseEntity<UserResponse> get(@PathVariable("id") UUID id) {
+        return ok(of(userService.findById(id)));
     }
 
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<User> update(@PathVariable("id") UUID id, @RequestBody CreateUserRequest req) {
-        return ok(userService.updateUser(id, req.name, req.email));
+    public ResponseEntity<UserResponse> update(@PathVariable("id") UUID id, @RequestBody CreateOrUpdateUserRequest req) {
+        return ok(of(userService.updateUser(id, req.name(), req.email())));
     }
 
     @DeleteMapping("/{id}")
@@ -52,11 +52,8 @@ public final class UserController implements UserControllerDocumentation {
 
     @GetMapping("")
     @Override
-    public ResponseEntity<Page<User>> list(Pageable pageable) {
-        return ok(userService.listUsers(pageable));
+    public ResponseEntity<Page<UserResponse>> list(Pageable pageable) {
+        Page<UserResponse> page = userService.listUsers(pageable).map(UserResponse::of);
+        return ok(page);
     }
-
-    public record CreateUserRequest(String name, String email) {
-    }
-
 }
