@@ -4,6 +4,8 @@ import com.badarak.domain.model.User;
 import com.badarak.domain.port.in.UserServicePort;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import com.badarak.domain.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,11 @@ public class UserController {
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("")
+    public ResponseEntity<Page<User>> list(Pageable pageable) {
+        return ok(userService.listUsers(pageable));
     }
 
     public record CreateUserRequest(String name, String email) {

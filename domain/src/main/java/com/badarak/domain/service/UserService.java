@@ -4,6 +4,8 @@ import com.badarak.domain.exception.ResourceNotFoundException;
 import com.badarak.domain.model.User;
 import com.badarak.domain.port.in.UserServicePort;
 import com.badarak.domain.port.out.UserRepositoryPort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -36,5 +38,10 @@ public class UserService implements UserServicePort {
         User existing = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + id));
 
         return repository.save(new User(existing.getId(), name, email));
+    }
+
+    @Override
+    public Page<User> listUsers(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 }
