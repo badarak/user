@@ -20,6 +20,7 @@ import java.util.UUID;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.UUID.fromString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.data.domain.PageRequest.of;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -63,12 +64,13 @@ class UserControllerTest {
     @Test
     void should_save_user() throws Exception {
         //Given
-        User user = new User(null, "test", "test@gmail.com");
+        CreateOrUpdateUserRequest request = new CreateOrUpdateUserRequest("test", "test@gmail.com");
+        when(repository.save(any(User.class))).thenReturn(new User(UUID.randomUUID(), "test", "test@gmail.com"));
 
-        //When
+        //When & Then
         mockMvc.perform(post("/api/users")
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
     }
 
@@ -87,9 +89,9 @@ class UserControllerTest {
         //Given
         UUID id = fromString("8a8bd2cc-caa6-4fb3-9ad4-2244393cb608");
         when(repository.findById(id)).thenReturn(of(new User(id, "name", "test@gmail.com")));
+        when(repository.save(any(User.class))).thenReturn(new User(id, "new_name", "new_test@gmail.com"));
 
-        User user = new User(
-                id,
+        CreateOrUpdateUserRequest request = new CreateOrUpdateUserRequest(
                 "new_name",
                 "new_test@gmail.com"
         );
@@ -97,7 +99,7 @@ class UserControllerTest {
         // When && Then
         mockMvc.perform(put("/api/users/{id}", id)
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 
