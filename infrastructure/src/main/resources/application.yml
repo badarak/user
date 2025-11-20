@@ -1,3 +1,7 @@
+server:
+  servlet:
+    context-path: /user
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/users
@@ -8,7 +12,6 @@ spring:
       ddl-auto: update
     properties:
       jakarta.persistence.jdbc.time_zone: UTC
-
 logging:
   level:
     root: INFO
