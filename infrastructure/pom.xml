@@ -38,8 +38,6 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-        <!-- Logging: SLF4J + Logback (fourni par Spring Boot) -->
-
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
