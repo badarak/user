@@ -6,7 +6,10 @@ import com.badarak.domain.port.out.UserRepositoryPort;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +18,7 @@ import static java.util.UUID.fromString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.domain.PageRequest.of;
 
 
 class UserServiceTest {
@@ -88,5 +92,23 @@ class UserServiceTest {
         assertEquals("new_name", captor.getValue().getName());
         assertEquals("new_email@gmail.com", captor.getValue().getEmail());
         assertEquals(id, captor.getValue().getId());
+    }
+
+    @Test
+    void should_get_all_users() {
+        //Given
+        Page<User> user = new PageImpl<>(
+                List.of(new User(UUID.randomUUID(), "test", "test@gmail.com")),
+                of(0, 10),
+                1
+        );
+        when(repository.findAll(of(0, 10))).thenReturn(user);
+
+        //When
+        Page<User> actual = userService.listUsers(of(0, 10));
+
+        //Then
+        assertEquals(1, actual.getTotalElements());
+        assertEquals("test", actual.getContent().getFirst().getName());
     }
 }

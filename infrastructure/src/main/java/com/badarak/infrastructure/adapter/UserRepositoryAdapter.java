@@ -3,6 +3,8 @@ package com.badarak.infrastructure.adapter;
 import com.badarak.domain.model.User;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import com.badarak.infrastructure.entity.UserEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -31,5 +33,10 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public void deleteById(UUID id) {
         repo.deleteById(id);
+    }
+
+    @Override
+    public Page<User> findAll(Pageable pageable) {
+        return repo.findAll(pageable).map(UserEntity::toDomain);
     }
 }

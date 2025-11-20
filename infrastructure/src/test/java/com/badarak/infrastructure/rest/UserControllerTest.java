@@ -7,14 +7,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.util.List;
 import java.util.UUID;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.UUID.fromString;
+import static org.mockito.Mockito.when;
+import static org.springframework.data.domain.PageRequest.of;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -34,7 +41,7 @@ class UserControllerTest {
     void should_return_error_when_user_not_found() throws Exception {
         //Given
         UUID uuid = UUID.randomUUID();
-        Mockito.when(repository.findById(uuid)).thenReturn(empty());
+        when(repository.findById(uuid)).thenReturn(empty());
 
         mockMvc.perform(get("/api/users/{id}", uuid))
                 .andExpect(status().isNotFound());
@@ -44,7 +51,7 @@ class UserControllerTest {
     void should_return_user() throws Exception {
         // Given
         UUID uuid = UUID.randomUUID();
-        Mockito.when(repository.findById(uuid)).thenReturn(of(new User(uuid, "test", "test@gmail.com")));
+        when(repository.findById(uuid)).thenReturn(of(new User(uuid, "test", "test@gmail.com")));
 
         // When && Then
         mockMvc.perform(get("/api/users/{id}", uuid))
@@ -79,7 +86,7 @@ class UserControllerTest {
     void should_update_user() throws Exception {
         //Given
         UUID id = fromString("8a8bd2cc-caa6-4fb3-9ad4-2244393cb608");
-        Mockito.when(repository.findById(id)).thenReturn(of(new User(id, "name", "test@gmail.com")));
+        when(repository.findById(id)).thenReturn(of(new User(id, "name", "test@gmail.com")));
 
         User user = new User(
                 id,
@@ -92,5 +99,21 @@ class UserControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(user)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_find_all_users() throws Exception {
+        //Given
+        User user = new User(UUID.randomUUID(), "test", "test@gmail.com");
+        Page<User> users = new PageImpl<>(
+                List.of(user),
+                of(0, 10),
+                1);
+
+        when(repository.findAll(Mockito.any(Pageable.class))).thenReturn(users);
+        //When & Then
+        mockMvc.perform(get("/api/users"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("test"));
     }
 }
