@@ -5,6 +5,7 @@ It is build around the flowing technical stack:
 - Architecture hexagonal (domain + infrastructure), 
 - Spring Boot 3, 
 - JPA (Postgres),
+- AOP logging,
 - Pagination, tests MockMvc
 
 Modules
@@ -20,5 +21,5 @@ docker run --name badarak-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=users 
 ```
 - swagger
 ```
-http://localhost:8080/swagger-ui/index.html#/
+http://localhost:8080/user/swagger-ui/index.html#/
 ```
