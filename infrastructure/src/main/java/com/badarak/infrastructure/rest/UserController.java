@@ -17,7 +17,7 @@ import static org.springframework.http.ResponseEntity.status;
 
 @RestController
 @RequestMapping("/api/users")
-public final class UserController implements UserControllerDocumentation {
+public class UserController implements UserControllerDocumentation {
     private final UserServicePort userService;
 
     public UserController(UserRepositoryPort repository) {
