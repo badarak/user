@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.UUID;
 
 @Tag(name = "User", description = "the User API")
-public sealed interface UserControllerDocumentation permits UserController {
+public interface UserControllerDocumentation {
 
     @Operation(
             summary = "Fetch all users",
