@@ -18,10 +18,10 @@ import static org.springframework.http.ResponseEntity.status;
 @RestController
 @RequestMapping("/api/users")
 public class UserController implements UserControllerDocumentation {
-    private final UserServicePort userService;
+        private final UserServicePort userService;
 
-    public UserController(UserRepositoryPort repository) {
-        this.userService = new UserService(repository);
+    public UserController(UserServicePort userService) {
+        this.userService = userService;
     }
 
     @PostMapping("")
