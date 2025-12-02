@@ -7,11 +7,19 @@ spring:
     url: jdbc:postgresql://localhost:5432/users
     username: postgres
     password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       jakarta.persistence.jdbc.time_zone: UTC
+
+  liquibase:
+    enabled: true
+    change-log: "classpath:/liquibase/db.changelog-master.yaml"
+    database-change-log-table: CHGLOG_USERS
+    database-change-log-lock-table: CHGLOG_LOCK_USERS
+
 logging:
   level:
     root: INFO
