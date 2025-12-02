@@ -1,7 +1,9 @@
 package com.badarak.domain.service;
 
+import com.badarak.domain.event.UserCreated;
 import com.badarak.domain.exception.ResourceNotFoundException;
 import com.badarak.domain.model.User;
+import com.badarak.domain.port.in.UserEventPublisher;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,7 +26,8 @@ import static org.springframework.data.domain.PageRequest.of;
 class UserServiceTest {
 
     private final UserRepositoryPort repository = mock(UserRepositoryPort.class);
-    private final UserService userService = new UserService(repository);
+    private final UserEventPublisher eventPublisher = mock(UserEventPublisher.class);
+    private final UserService userService = new UserService(repository, eventPublisher);
 
 
     @Test
@@ -54,16 +57,20 @@ class UserServiceTest {
     }
 
     @Test
-    void should_create_user() {
+    void should_publish_message_on_user_created() {
+        //Given
+        User save =  new User(UUID.randomUUID(), "test", "test@gmail.com");
+        when(repository.save(any(User.class))).thenReturn(save);
+
         //When
         userService.createUser("test", "test@gmail.com");
 
         //Then
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(repository, times(1)).save(captor.capture());
-        assertEquals("test", captor.getValue().getName());
-        assertEquals("test@gmail.com", captor.getValue().getEmail());
-        assertNotNull(captor.getValue().getId());
+        ArgumentCaptor<UserCreated> captor = ArgumentCaptor.forClass(UserCreated.class);
+        verify(eventPublisher, times(1)).publish(captor.capture());
+
+        assertEquals("test@gmail.com", captor.getValue().email());
+        assertNotNull(captor.getValue().id());
     }
 
     @Test
