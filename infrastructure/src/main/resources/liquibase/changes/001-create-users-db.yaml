@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-table-users
+      author: aliou.kane
+      sqlFile:
+        path: classpath:liquibase/sql/001-create-table-users.sql
