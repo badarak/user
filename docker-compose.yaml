@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+      image: postgres:15
+      container_name: userdb
+      environment:
+        POSTGRES_DB: users
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+      ports:
+        - "5432:5432"
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+  rabbitmq:
+    image: rabbitmq:4.2-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"    # AMQP communication
+      - "15672:15672"  # Web UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-logs:/var/log/rabbitmq
+volumes:
+  pgdata:
+  rabbitmq-data:
+  rabbitmq-logs:

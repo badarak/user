@@ -17,7 +17,7 @@ Install and Run
 ```
 mvn clean install
 
-docker run --name badarak-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=users -d -p 5432:5432 postgres
+docker-compose up
 ```
 - swagger
 ```

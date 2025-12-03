@@ -1,7 +1,9 @@
 package com.badarak.domain.service;
 
+import com.badarak.domain.event.UserCreated;
 import com.badarak.domain.exception.ResourceNotFoundException;
 import com.badarak.domain.model.User;
+import com.badarak.domain.port.in.UserEventPublisher;
 import com.badarak.domain.port.in.UserServicePort;
 import com.badarak.domain.port.out.UserRepositoryPort;
 import org.springframework.data.domain.Page;
@@ -11,9 +13,11 @@ import java.util.UUID;
 
 public class UserService implements UserServicePort {
     private final UserRepositoryPort repository;
+    private final UserEventPublisher publish;
 
-    public UserService(UserRepositoryPort repository) {
+    public UserService(UserRepositoryPort repository, UserEventPublisher eventPublisher) {
         this.repository = repository;
+        this.publish = eventPublisher;
     }
 
     @Override
@@ -23,7 +27,9 @@ public class UserService implements UserServicePort {
 
     @Override
     public User createUser(String name, String email) {
-        return repository.save(new User(UUID.randomUUID(), name, email));
+        User saved = repository.save(new User(UUID.randomUUID(), name, email));
+        publish.publish(UserCreated.of(saved));
+        return saved;
     }
 
     @Override
