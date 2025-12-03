@@ -20,6 +20,22 @@ spring:
     database-change-log-table: CHGLOG_USERS
     database-change-log-lock-table: CHGLOG_LOCK_USERS
 
+  cloud:
+    stream:
+      bindings:
+        userCreatedOutPut:
+          destination: live.badarak-plateform
+          content-type: application/json
+      rabbit:
+        bindings:
+          userCreatedOutPut.producer.routing-key-expression: "'user.created'"
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+
 logging:
   level:
     root: INFO
