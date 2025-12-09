@@ -39,4 +39,5 @@ spring:
 logging:
   level:
     root: INFO
-    com.example: DEBUG
+    com.badarak: DEBUG
+
