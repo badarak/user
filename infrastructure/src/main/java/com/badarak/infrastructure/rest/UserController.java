@@ -1,8 +1,6 @@
 package com.badarak.infrastructure.rest;
 
 import com.badarak.domain.port.in.UserServicePort;
-import com.badarak.domain.port.out.UserRepositoryPort;
-import com.badarak.domain.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

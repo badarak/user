@@ -14,7 +14,7 @@ import static com.badarak.infrastructure.entity.UserEntity.of;
 
 @Repository
 public class UserRepositoryAdapter implements UserRepositoryPort {
-    private SpringDataUserRepository repo;
+    private final SpringDataUserRepository repo;
 
     public UserRepositoryAdapter(SpringDataUserRepository repo) {
         this.repo = repo;
