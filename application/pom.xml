@@ -1,17 +1,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.badarak</groupId>
         <artifactId>user</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-
-    <artifactId>report</artifactId>
+    <artifactId>application</artifactId>
     <packaging>jar</packaging>
+
+    <name>application</name>
+    <description>Application layer - Use cases orchestration</description>
 
     <dependencies>
         <dependency>
@@ -20,32 +24,18 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.badarak</groupId>
-            <artifactId>infrastructure</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.badarak</groupId>
-            <artifactId>application</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <!-- Apporte spring-tx (@Transactional) sans embarquer JPA/Hibernate -->
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>jacoco-site-aggregate</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-aggregate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -57,6 +47,5 @@
                 </executions>
             </plugin>
         </plugins>
-
     </build>
 </project>

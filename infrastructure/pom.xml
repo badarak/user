@@ -19,6 +19,11 @@
             <artifactId>domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.badarak</groupId>
+            <artifactId>application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Spring Boot starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -35,12 +40,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-        </dependency>
-        <!-- Tests -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
