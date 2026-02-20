@@ -1,110 +1,171 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
 import com.badarak.domain.exception.UserAlreadyExistsException;
-import com.badarak.domain.model.Email;
-import com.badarak.domain.model.UserId;
+import com.badarak.domain.exception.UserNotFoundException;
+import com.badarak.domain.model.*;
 import com.badarak.domain.port.in.CreateUserUseCase;
-import com.badarak.infrastructure.adapter.in.web.mapper.UserRequestMapper;
+import com.badarak.domain.port.in.GetUserUseCase;
+import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+import java.util.UUID;
+
 import static com.badarak.domain.exception.ErrorCode.USER_ALREADY_EXISTS;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserController.class)
-@DisplayName("UserController — POST /api/v1/users")
+@DisplayName("UserController — CRUD /api/v1/users")
 class UserControllerTest {
     @Autowired
     MockMvc mockMvc;
     @Autowired
-    ObjectMapper objectMapper;
+    ObjectMapper json;
+
     @MockitoBean
-    CreateUserUseCase useCase;
+    CreateUserUseCase createUser;
     @MockitoBean
-    UserRequestMapper mapper;
+    GetUserUseCase getUser;
 
-    @Test
-    void should_return_201_with_header_location_and_id_in_the_body() throws Exception {
-        final var id = UserId.generate();
-        when(useCase.execute(any())).thenReturn(id);
-        when(mapper.toCommand(any())).thenCallRealMethod();
-        when(mapper.toResponse(any())).thenCallRealMethod();
+    @MockitoBean
+    UserMapper mapper;
 
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content(validBody()))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/v1/users/" + id.value())))
-                .andExpect(jsonPath("$.id").value(id.value().toString()));
+    private final UUID ID = UUID.randomUUID();
+    private final UserId UID = new UserId(ID);
+
+    private User sampleUser() {
+        return User.reconstitute(UID,
+                new Email("john@example.com"),
+                new UserName("John", "Doe"),
+                UserStatus.ACTIVE,
+                Instant.now(),
+                Instant.now()
+        );
     }
 
-    @Test
-    void should_return_400_when_email_mission() throws Exception {
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"firstName":"John","lastName":"Doe"}
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[?(@.field=='email')]").exists());
+    @Nested
+    @DisplayName("POST /api/v1/users")
+    class CreateEndpoint {
+
+        @Test
+        void should_return_201_with_header_location_and_id_in_the_body() throws Exception {
+            final var id = UserId.generate();
+            when(createUser.execute(any())).thenReturn(id);
+            when(mapper.toCommand(any())).thenCallRealMethod();
+            when(mapper.toResponse(any())).thenCallRealMethod();
+
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content(validBody()))
+                    .andExpect(status().isCreated())
+                    .andExpect(header().string("Location", containsString("/api/v1/users/" + id.value())))
+                    .andExpect(jsonPath("$.id").value(id.value().toString()));
+        }
+
+        @Test
+        void should_return_400_when_email_mission() throws Exception {
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"firstName":"John","lastName":"Doe"}
+                                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors[?(@.field=='email')]").exists());
+        }
+
+        @Test
+        void should_return_400_when_email_format_invalid() throws Exception {
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"email":"not-valid","firstName":"John","lastName":"Doe"}
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_400_when_first_name_is_blank() throws Exception {
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"email":"a@b.com","firstName":"   ","lastName":"Doe"}
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_400_when_last_name_is_blank() throws Exception {
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"email":"a@b.com","firstName":"John","lastName":" "}
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_409_when_email_already_existing_error_code() throws Exception {
+            when(createUser.execute(any()))
+                    .thenThrow(new UserAlreadyExistsException(new Email("john@example.com")));
+            when(mapper.toCommand(any())).thenCallRealMethod();
+
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(APPLICATION_JSON)
+                            .content(validBody()))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.title").value("User Already Exists"))
+                    .andExpect(jsonPath("$.errorCode").value(USER_ALREADY_EXISTS.name()));
+        }
     }
 
-    @Test
-    void should_return_400_when_email_format_invalid() throws Exception {
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"email":"not-valid","firstName":"John","lastName":"Doe"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
+    @Nested
+    @DisplayName("GET /api/v1/users/{id}")
+    class GetEndpoint {
 
-    @Test
-    void should_return_400_when_first_name_is_blank() throws Exception {
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"email":"a@b.com","firstName":"   ","lastName":"Doe"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        void should_return_200_when_user_found() throws Exception {
+            final var user = sampleUser();
+            when(getUser.execute(any())).thenReturn(user);
+            when(mapper.toUserResponse(user)).thenCallRealMethod();
 
-    @Test
-    void should_return_400_when_last_name_is_blank() throws Exception {
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"email":"a@b.com","firstName":"John","lastName":" "}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
+            mockMvc.perform(get("/api/v1/users/{id}", ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(ID.toString()))
+                    .andExpect(jsonPath("$.email").value("john@example.com"))
+                    .andExpect(jsonPath("$.status").value("ACTIVE"));
+        }
 
-    @Test
-    void should_return_409_when_email_already_existing_error_code() throws Exception {
-        when(useCase.execute(any()))
-                .thenThrow(new UserAlreadyExistsException(new Email("john@example.com")));
-        when(mapper.toCommand(any())).thenCallRealMethod();
+        @Test
+        void should_return_404_when_user_not_found() throws Exception {
+            when(getUser.execute(any())).thenThrow(new UserNotFoundException(UID));
 
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(APPLICATION_JSON)
-                        .content(validBody()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.title").value("User Already Exists"))
-                .andExpect(jsonPath("$.errorCode").value(USER_ALREADY_EXISTS.name()));
+            mockMvc.perform(get("/api/v1/users/{id}", ID))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.errorCode").value("USER_NOT_FOUND"));
+        }
+
+        @Test
+        void should_return_400_when_id_is_not_a_valid_UUI() throws Exception {
+            mockMvc.perform(get("/api/v1/users/not-a-uuid"))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
     private String validBody() throws Exception {
-        return objectMapper.writeValueAsString(
+        return json.writeValueAsString(
                 new java.util.LinkedHashMap<>() {{
                     put("email", "john@example.com");
                     put("firstName", "John");

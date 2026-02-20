@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.List;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
                 "One or more parameters are invalid");
         problemDetail.setProperty("errors", errors);
         return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ProblemDetail> onIllegalArgument(MethodArgumentTypeMismatchException ex) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(problem(HttpStatus.BAD_REQUEST,
+                        "Invalid Format", "The provided value format is invalid"));
     }
 
     @ExceptionHandler(UserNotFoundException.class)

@@ -1,19 +1,20 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
+import com.badarak.domain.model.UserId;
 import com.badarak.domain.port.in.CreateUserUseCase;
+import com.badarak.domain.port.in.GetUserUseCase;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserRequest;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserResponse;
-import com.badarak.infrastructure.adapter.in.web.mapper.UserRequestMapper;
+import com.badarak.infrastructure.adapter.in.web.dto.UserResponse;
+import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,11 +22,13 @@ import static java.util.Objects.requireNonNull;
 @RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "User management API")
 public class UserController implements UserControllerDocumentation {
-    private final CreateUserUseCase createUserUseCase;
-    private final UserRequestMapper mapper;
+    private final CreateUserUseCase createUser;
+    private final GetUserUseCase getUser;
+    private final UserMapper mapper;
 
-    UserController(CreateUserUseCase createUserUseCase, UserRequestMapper mapper) {
-        this.createUserUseCase = requireNonNull(createUserUseCase);
+    UserController(CreateUserUseCase createUser, GetUserUseCase getUser, UserMapper mapper) {
+        this.createUser = requireNonNull(createUser);
+        this.getUser = requireNonNull(getUser);
         this.mapper = requireNonNull(mapper);
     }
 
@@ -34,7 +37,7 @@ public class UserController implements UserControllerDocumentation {
     public ResponseEntity<CreateUserResponse> create(@Valid @RequestBody CreateUserRequest req) {
 
         final var command = mapper.toCommand(req);
-        final var userId = createUserUseCase.execute(command);
+        final var userId = createUser.execute(command);
         final var response = mapper.toResponse(userId);
 
         final URI location = ServletUriComponentsBuilder
@@ -46,11 +49,13 @@ public class UserController implements UserControllerDocumentation {
         return ResponseEntity.created(location).body(response);
     }
 
-//    @GetMapping("/{id}")
-//    @Override
-//    public ResponseEntity<UserResponse> get(@PathVariable("id") UUID id) {
-//        return ok(of(userService.findById(id)));
-//    }
+
+    @GetMapping("/{id}")
+    @Override
+    public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(mapper.toUserResponse(getUser.execute(new UserId(id))));
+    }
+
 //
 //    @PutMapping("/{id}")
 //    @Override
