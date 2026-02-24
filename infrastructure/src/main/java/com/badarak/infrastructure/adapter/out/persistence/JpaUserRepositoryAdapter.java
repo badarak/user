@@ -3,11 +3,15 @@ package com.badarak.infrastructure.adapter.out.persistence;
 import com.badarak.domain.model.Email;
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
+import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
+import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
 import com.badarak.domain.port.out.UserRepository;
+import com.badarak.infrastructure.adapter.out.persistence.entity.UserEntity;
 import com.badarak.infrastructure.adapter.out.persistence.mapper.UserEntityMapper;
 import com.badarak.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
@@ -47,7 +51,23 @@ public class JpaUserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public Page<User> findAll(Pageable pageable) {
-        return jpaRepository.findAll(pageable).map(mapper::toDomain);
+    public UserPage findAll(UserQuery query) {
+        Objects.requireNonNull(query);
+
+        final var pageable = PageRequest.of(query.page(), query.size(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        final Page<UserEntity> page =
+                query.status() != null
+                        ? jpaRepository.findAllByStatus(query.status(), pageable)
+                        : jpaRepository.findAll(pageable);
+
+        return new UserPage(
+                page.getContent().stream().map(mapper::toDomain).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
     }
 }

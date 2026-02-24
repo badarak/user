@@ -5,6 +5,8 @@ import com.badarak.domain.exception.UserNotFoundException;
 import com.badarak.domain.model.*;
 import com.badarak.domain.port.in.CreateUserUseCase;
 import com.badarak.domain.port.in.GetUserUseCase;
+import com.badarak.domain.port.in.ListUsersUseCase;
+import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -16,11 +18,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static com.badarak.domain.exception.ErrorCode.USER_ALREADY_EXISTS;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,6 +44,8 @@ class UserControllerTest {
     CreateUserUseCase createUser;
     @MockitoBean
     GetUserUseCase getUser;
+    @MockitoBean
+    ListUsersUseCase listUsers;
 
     @MockitoBean
     UserMapper mapper;
@@ -160,6 +167,42 @@ class UserControllerTest {
         @Test
         void should_return_400_when_id_is_not_a_valid_UUI() throws Exception {
             mockMvc.perform(get("/api/v1/users/not-a-uuid"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/users")
+    class ListEndpoint {
+
+        @Test
+        void should_return_200() throws Exception {
+            final var user = sampleUser();
+            final var page = new UserPage(List.of(user), 0, 20, 1L, 1);
+            when(listUsers.execute(any())).thenReturn(page);
+            when(mapper.toPageResponse(any())).thenCallRealMethod();
+            when(mapper.toUserResponse(any())).thenCallRealMethod();
+
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(1)))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Test
+        void should_return_200_and_filtered_by_ACTIVE_status() throws Exception {
+            when(listUsers.execute(argThat(q -> q.status() == UserStatus.ACTIVE)))
+                    .thenReturn(new UserPage(List.of(), 0, 20, 0L, 0));
+            when(mapper.toPageResponse(any())).thenCallRealMethod();
+
+            mockMvc.perform(get("/api/v1/users").param("status", "ACTIVE"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        void should_return_400_when_invalid_size() throws Exception {
+            mockMvc.perform(get("/api/v1/users").param("size", "200"))
                     .andExpect(status().isBadRequest());
         }
     }

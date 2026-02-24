@@ -1,29 +1,45 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
+import com.badarak.domain.model.UserStatus;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserRequest;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserResponse;
+import com.badarak.infrastructure.adapter.in.web.dto.UserPageResponse;
 import com.badarak.infrastructure.adapter.in.web.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
 public interface UserControllerDocumentation {
 
-//    @Operation(
-//            summary = "Fetch all users",
-//            description = "Fetch all users and paginate the result"
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "Successful operation"),
-//            @ApiResponse(responseCode = "500", description = "Internal Server Error")
-//    })
-//    ResponseEntity<Page<UserResponse>> list(Pageable pageable);
+    @Operation(
+            summary = "List users",
+            description = "Paginated list, filterable by status."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Results page",
+            content = @Content(schema = @Schema(implementation = UserPageResponse.class))
+    )
+    ResponseEntity<UserPageResponse> list(
+            @Parameter(description = "Page number (base 0)")
+            @Min(0)
+            int page,
+            @Parameter(description = "Page size (max 100)")
+            @Min(1) @Max(100)
+            int size,
+            @Parameter(description = "Status filter: ACTIVE | INACTIVE | (absent = all)")
+            UserStatus status
+    );
 
     @Operation(summary = "Get a user by his id")
     @ApiResponses(value = {
@@ -55,7 +71,7 @@ public interface UserControllerDocumentation {
                     description = "A user with this email address already exists."
             )
     })
-    ResponseEntity<CreateUserResponse> create(CreateUserRequest request);
+    ResponseEntity<CreateUserResponse> create(@Valid CreateUserRequest request);
 
 //    @Operation(summary = "Update the given user")
 //    @ApiResponses(value = {

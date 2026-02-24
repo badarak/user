@@ -4,8 +4,10 @@ package com.badarak.infrastructure.adapter.in.web.mapper;
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
 import com.badarak.domain.port.in.CreateUserUseCase.CreateUserCommand;
+import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserRequest;
 import com.badarak.infrastructure.adapter.in.web.dto.CreateUserResponse;
+import com.badarak.infrastructure.adapter.in.web.dto.UserPageResponse;
 import com.badarak.infrastructure.adapter.in.web.dto.UserResponse;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +42,17 @@ public class UserMapper {
                 user.getStatus(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
+        );
+    }
+
+    public UserPageResponse toPageResponse(UserPage page) {
+        Objects.requireNonNull(page);
+        return new UserPageResponse(
+                page.content().stream().map(this::toUserResponse).toList(),
+                page.page(),
+                page.size(),
+                page.totalElements(),
+                page.totalPages()
         );
     }
 }

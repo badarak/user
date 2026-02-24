@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.badarak.domain.exception.ErrorCode.USER_NOT_FOUND;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -135,6 +136,145 @@ public class ReadUserIntegrationTest {
                     .andExpect(jsonPath("$.email").value("direct@example.com"))
                     .andExpect(jsonPath("$.firstName").value("Direct"))
                     .andExpect(jsonPath("$.lastName").value("Store"));
+        }
+    }
+
+    @Nested @DisplayName("GET /api/v1/users")
+    class ListUsers {
+
+        @Test
+        void should_return_200_with_empty_page_when_no_users_exist() throws Exception {
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content", hasSize(0)))
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(jsonPath("$.totalPages").value(0));
+        }
+
+        @Test
+        void should_return_all_users_on_default_page() throws Exception {
+            createViaApi("a@example.com", "A", "A");
+            createViaApi("b@example.com", "B", "B");
+            createViaApi("c@example.com", "C", "C");
+
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(3))
+                    .andExpect(jsonPath("$.content", hasSize(3)));
+        }
+
+        @Test
+        void should_respect_page_size_param() throws Exception {
+            createViaApi("a@example.com", "A", "A");
+            createViaApi("b@example.com", "B", "B");
+            createViaApi("c@example.com", "C", "C");
+
+            mockMvc.perform(get("/api/v1/users").param("size", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(2)))
+                    .andExpect(jsonPath("$.totalElements").value(3))
+                    .andExpect(jsonPath("$.totalPages").value(2));
+        }
+
+        @Test
+        void should_return_correct_second_page() throws Exception {
+            createViaApi("a@example.com", "A", "A");
+            createViaApi("b@example.com", "B", "B");
+            createViaApi("c@example.com", "C", "C");
+
+            mockMvc.perform(get("/api/v1/users").param("page", "1").param("size", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(1)))
+                    .andExpect(jsonPath("$.page").value(1));
+        }
+
+        @Test
+        void should_filter_only_ACTIVE_users_when_status_ACTIVE_requested() throws Exception {
+            createViaApi("active@example.com", "Active", "User");
+            persistInactive("inactive@example.com");
+
+            mockMvc.perform(get("/api/v1/users").param("status", "ACTIVE"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
+        }
+
+        @Test
+        void should_filter_only_INACTIVE_users_when_status_INACTIVE_requested() throws Exception {
+            createViaApi("active@example.com", "Active", "User");
+            persistInactive("inactive@example.com");
+
+            mockMvc.perform(get("/api/v1/users").param("status", "INACTIVE"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.content[0].status").value("INACTIVE"));
+        }
+
+        @Test
+        void should_include_both_statuses_when_no_filter_applied() throws Exception {
+            createViaApi("active@example.com", "Active", "User");
+            persistInactive("inactive@example.com");
+
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.content[*].status",
+                            containsInAnyOrder("ACTIVE", "INACTIVE")));
+        }
+
+        @Test
+        void should_return_pagination_metadata_in_response() throws Exception {
+            createViaApi("a@example.com", "A", "A");
+
+            mockMvc.perform(get("/api/v1/users").param("page", "0").param("size", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(10))
+                    .andExpect(jsonPath("$.totalElements").isNumber())
+                    .andExpect(jsonPath("$.totalPages").isNumber());
+        }
+
+        @Test
+        void should_return_each_user_with_all_required_fields() throws Exception {
+            createViaApi("full@example.com", "Full", "Fields");
+
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].id").exists())
+                    .andExpect(jsonPath("$.content[0].email").exists())
+                    .andExpect(jsonPath("$.content[0].firstName").exists())
+                    .andExpect(jsonPath("$.content[0].lastName").exists())
+                    .andExpect(jsonPath("$.content[0].status").exists())
+                    .andExpect(jsonPath("$.content[0].createdAt").exists())
+                    .andExpect(jsonPath("$.content[0].updatedAt").exists());
+        }
+
+        @Test
+        void should_return_400_when_size_exceeds_100() throws Exception {
+            mockMvc.perform(get("/api/v1/users").param("size", "101"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_400_when_page_is_negative() throws Exception {
+            mockMvc.perform(get("/api/v1/users").param("page", "-1"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_400_for_invalid_status_value() throws Exception {
+            mockMvc.perform(get("/api/v1/users").param("status", "UNKNOWN"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_reflect_user_created_via_POST_in_list() throws Exception {
+            final var id = createViaApi("listed@example.com", "Listed", "User");
+
+            mockMvc.perform(get("/api/v1/users"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[*].id", hasItem(id.toString())));
         }
     }
 }

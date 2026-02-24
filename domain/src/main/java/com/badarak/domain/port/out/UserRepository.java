@@ -3,8 +3,8 @@ package com.badarak.domain.port.out;
 import com.badarak.domain.model.Email;
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
+import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
 
 import java.util.Optional;
 
@@ -17,5 +17,5 @@ public interface UserRepository {
 
     boolean existsByEmail(Email email);
 
-    Page<User> findAll(Pageable pageable);
+    UserPage findAll(UserQuery query);
 }
