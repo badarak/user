@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
 @DisplayName("READ feature — integration test")
-public class ReadUserIntegrationTest {
+public class UserControllerReadIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;

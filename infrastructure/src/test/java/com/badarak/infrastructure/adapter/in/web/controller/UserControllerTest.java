@@ -1,9 +1,11 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
 import com.badarak.domain.exception.UserAlreadyExistsException;
+import com.badarak.domain.exception.UserAlreadyInactiveException;
 import com.badarak.domain.exception.UserNotFoundException;
 import com.badarak.domain.model.*;
 import com.badarak.domain.port.in.CreateUserUseCase;
+import com.badarak.domain.port.in.DeleteUserUseCase;
 import com.badarak.domain.port.in.GetUserUseCase;
 import com.badarak.domain.port.in.ListUsersUseCase;
 import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
@@ -21,15 +23,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import static com.badarak.domain.exception.ErrorCode.USER_ALREADY_EXISTS;
+import static com.badarak.domain.exception.ErrorCode.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserController.class)
@@ -46,6 +47,8 @@ class UserControllerTest {
     GetUserUseCase getUser;
     @MockitoBean
     ListUsersUseCase listUsers;
+    @MockitoBean
+    DeleteUserUseCase deleteUser;
 
     @MockitoBean
     UserMapper mapper;
@@ -60,6 +63,16 @@ class UserControllerTest {
                 UserStatus.ACTIVE,
                 Instant.now(),
                 Instant.now()
+        );
+    }
+
+    private String validBody() throws Exception {
+        return json.writeValueAsString(
+                new java.util.LinkedHashMap<>() {{
+                    put("email", "john@example.com");
+                    put("firstName", "John");
+                    put("lastName", "Doe");
+                }}
         );
     }
 
@@ -207,13 +220,31 @@ class UserControllerTest {
         }
     }
 
-    private String validBody() throws Exception {
-        return json.writeValueAsString(
-                new java.util.LinkedHashMap<>() {{
-                    put("email", "john@example.com");
-                    put("firstName", "John");
-                    put("lastName", "Doe");
-                }}
-        );
+    @Nested
+    @DisplayName("DELETE /api/v1/users/{id}")
+    class DeleteEndpoint {
+
+        @Test
+        void should_return_204() throws Exception {
+            doNothing().when(deleteUser).execute(any());
+            mockMvc.perform(delete("/api/v1/users/{id}", ID))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void should_return_404_when_user_not_found() throws Exception {
+            doThrow(new UserNotFoundException(UID)).when(deleteUser).execute(any());
+            mockMvc.perform(delete("/api/v1/users/{id}", ID))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.errorCode").value(USER_NOT_FOUND.name()));
+        }
+
+        @Test
+        void should_return_409_when_user_already_inactive() throws Exception {
+            doThrow(new UserAlreadyInactiveException(UID)).when(deleteUser).execute(any());
+            mockMvc.perform(delete("/api/v1/users/{id}", ID))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorCode").value(USER_ALREADY_INACTIVE.name()));
+        }
     }
 }

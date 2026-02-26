@@ -81,9 +81,11 @@ public interface UserControllerDocumentation {
 //    })
 //    ResponseEntity<UserResponse> update(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id, CreateOrUpdateUserRequest createUserRequest);
 //
-//    @Operation(summary = "Delete the given user")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "204", description = "User deleted successfully")
-//    })
-//    ResponseEntity<Void> delete(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id);
+    @Operation(summary = "Delete the given user", description = "Soft-delete : changes the status to INACTIVE.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "User disabled"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "409", description = "User already inactive")
+    })
+    ResponseEntity<Void> delete(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id);
 }

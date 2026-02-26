@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String PROBLEM_BASE_URI = "https://badarak.com/problems";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ProblemDetail> onValidation(MethodArgumentNotValidException ex) {
@@ -34,6 +36,7 @@ public class GlobalExceptionHandler {
                 .toList();
         final var p = problem(
                 HttpStatus.BAD_REQUEST,
+                "validation-error",
                 "Validation Error",
                 "One or more fields are invalid"
         );
@@ -51,6 +54,7 @@ public class GlobalExceptionHandler {
                 .toList();
         final var problemDetail = problem(
                 HttpStatus.BAD_REQUEST,
+                "validation-error",
                 "Validation Error",
                 "One or more parameters are invalid");
         problemDetail.setProperty("errors", errors);
@@ -61,7 +65,7 @@ public class GlobalExceptionHandler {
     ResponseEntity<ProblemDetail> onIllegalArgument(MethodArgumentTypeMismatchException ex) {
         log.warn("Invalid argument: {}", ex.getMessage());
         return ResponseEntity.badRequest()
-                .body(problem(HttpStatus.BAD_REQUEST,
+                .body(problem(HttpStatus.BAD_REQUEST, "invalid-format",
                         "Invalid Format", "The provided value format is invalid"));
     }
 
@@ -69,28 +73,28 @@ public class GlobalExceptionHandler {
     ResponseEntity<ProblemDetail> onNotFound(UserNotFoundException ex) {
         log.warn("Not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(domainProblem(HttpStatus.NOT_FOUND, "User Not Found", ex));
+                .body(domainProblem(HttpStatus.NOT_FOUND, "user-not-found", "User Not Found", ex));
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     ResponseEntity<ProblemDetail> onConflict(UserAlreadyExistsException ex) {
         log.warn("Conflict (duplicate email): {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(domainProblem(HttpStatus.CONFLICT, "User Already Exists", ex));
+                .body(domainProblem(HttpStatus.CONFLICT, "user-already-exists", "User Already Exists", ex));
     }
 
     @ExceptionHandler(UserAlreadyInactiveException.class)
     ResponseEntity<ProblemDetail> onAlreadyInactive(UserAlreadyInactiveException ex) {
         log.warn("Conflict (already inactive): {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(domainProblem(HttpStatus.CONFLICT, "User Already Inactive", ex));
+                .body(domainProblem(HttpStatus.CONFLICT, "user-already-inactive", "User Already Inactive", ex));
     }
 
     @ExceptionHandler(DomainException.class)
     ResponseEntity<ProblemDetail> onDomain(DomainException ex) {
         log.warn("Domain error [{}]: {}", ex.errorCode(), ex.getMessage());
         return ResponseEntity.badRequest()
-                .body(domainProblem(HttpStatus.BAD_REQUEST, "Domain Error", ex));
+                .body(domainProblem(HttpStatus.BAD_REQUEST, "domain-error", "Domain Error", ex));
     }
 
     @ExceptionHandler(Exception.class)
@@ -98,17 +102,18 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error", ex);
         return ResponseEntity.internalServerError()
                 .body(problem(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Internal Server Error", "An unexpected error occurred."));
+                        "validation-error", "Internal Server Error", "An unexpected error occurred."));
     }
 
-    private static ProblemDetail domainProblem(HttpStatus httpStatus, String title, DomainException ex) {
-        final var problemDetail = problem(httpStatus, title, ex.getMessage());
+    private static ProblemDetail domainProblem(HttpStatus httpStatus, String type, String title, DomainException ex) {
+        final var problemDetail = problem(httpStatus, type, title, ex.getMessage());
         problemDetail.setProperty("errorCode", ex.errorCode());
         return problemDetail;
     }
 
-    private static ProblemDetail problem(HttpStatus httpStatus, String title, String detail) {
+    private static ProblemDetail problem(HttpStatus httpStatus, String type, String title, String detail) {
         final var problemDetail = ProblemDetail.forStatus(httpStatus);
+        problemDetail.setType(URI.create(PROBLEM_BASE_URI + "/" + type));
         problemDetail.setTitle(title);
         problemDetail.setDetail(detail);
         problemDetail.setProperty("timestamp", Instant.now());

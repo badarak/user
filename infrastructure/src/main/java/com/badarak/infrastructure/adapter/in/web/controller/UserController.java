@@ -3,6 +3,7 @@ package com.badarak.infrastructure.adapter.in.web.controller;
 import com.badarak.domain.model.UserId;
 import com.badarak.domain.model.UserStatus;
 import com.badarak.domain.port.in.CreateUserUseCase;
+import com.badarak.domain.port.in.DeleteUserUseCase;
 import com.badarak.domain.port.in.GetUserUseCase;
 import com.badarak.domain.port.in.ListUsersUseCase;
 import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
@@ -30,12 +31,14 @@ public class UserController implements UserControllerDocumentation {
     private final CreateUserUseCase createUser;
     private final GetUserUseCase getUser;
     private final ListUsersUseCase listUsers;
+    private final DeleteUserUseCase deleteUser;
     private final UserMapper mapper;
 
-    UserController(CreateUserUseCase createUser, GetUserUseCase getUser, ListUsersUseCase listUsers, UserMapper mapper) {
+    UserController(CreateUserUseCase createUser, GetUserUseCase getUser, ListUsersUseCase listUsers, DeleteUserUseCase deleteUser, UserMapper mapper) {
         this.createUser = requireNonNull(createUser);
         this.getUser = requireNonNull(getUser);
         this.listUsers = requireNonNull(listUsers);
+        this.deleteUser = requireNonNull(deleteUser);
         this.mapper = requireNonNull(mapper);
     }
 
@@ -70,13 +73,13 @@ public class UserController implements UserControllerDocumentation {
 //        return ok(of(userService.updateUser(id, req.name(), req.email())));
 //    }
 //
-//    @DeleteMapping("/{id}")
-//    @Override
-//    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
-//        userService.deleteUser(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//
+    @DeleteMapping("/{id}")
+    @Override
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
+        deleteUser.execute(new UserId(id));
+        return ResponseEntity.noContent().build();
+    }
+
 
     @GetMapping
     @Override
