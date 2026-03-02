@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class LoggingAspect {
     private final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 
-    @Around("execution(* com.badarak.domain.service.*.*(..)) || execution(* com.badarak.infrastructure.rest..*(..))")
+    @Around("execution(* com.badarak.infrastructure.adapter.in.web.controller.*(..))")
     public Object logAround(ProceedingJoinPoint pjp) throws Throwable {
         String method = pjp.getSignature().toShortString();
         log.info("Entering");
