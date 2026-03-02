@@ -2,7 +2,7 @@
 The aim of this service is to manage users having CRUD features.
 It is build around the flowing technical stack:
 - Java 21 + Maven 3, 
-- Architecture hexagonal (domain + infrastructure), 
+- Architecture hexagonal (domain + application + infrastructure), 
 - Spring Boot 3, 
 - JPA (Postgres),
 - AOP logging,
@@ -10,6 +10,7 @@ It is build around the flowing technical stack:
 
 Modules
 - domain
+- application
 - infrastructure
 
 Install and Run
