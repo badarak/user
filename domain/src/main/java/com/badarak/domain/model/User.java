@@ -12,13 +12,14 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 @Getter
 public class User {
 
     private final UserId id;
     private final Email email;
-    private final UserName name;
+    private UserName name;
     private UserStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
@@ -26,11 +27,11 @@ public class User {
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
     private User(UserId id, Email email, UserName name, UserStatus status, Instant createdAt) {
-        this.id = Objects.requireNonNull(id, "id must not be null");
-        this.email = Objects.requireNonNull(email, "email must not be null");
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.status = Objects.requireNonNull(status, "status must not be null");
-        this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
+        this.id = requireNonNull(id, "id must not be null");
+        this.email = requireNonNull(email, "email must not be null");
+        this.name = requireNonNull(name, "name must not be null");
+        this.status = requireNonNull(status, "status must not be null");
+        this.createdAt = requireNonNull(createdAt, "createdAt must not be null");
         this.updatedAt = createdAt;
     }
 
@@ -67,6 +68,12 @@ public class User {
         this.updatedAt = Instant.now();
     }
 
+    public void updateName(UserName newName) {
+        requireNonNull(newName, "newName must not be null");
+        this.name = newName;
+        this.updatedAt = Instant.now();
+    }
+
     public List<DomainEvent> domainEvents() {
         return Collections.unmodifiableList(domainEvents);
     }
@@ -76,7 +83,7 @@ public class User {
     }
 
     private void registerEvent(DomainEvent event) {
-        domainEvents.add(Objects.requireNonNull(event));
+        domainEvents.add(requireNonNull(event));
     }
 
     @Override

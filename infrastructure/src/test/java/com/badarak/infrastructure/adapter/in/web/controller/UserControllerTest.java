@@ -4,10 +4,7 @@ import com.badarak.domain.exception.UserAlreadyExistsException;
 import com.badarak.domain.exception.UserAlreadyInactiveException;
 import com.badarak.domain.exception.UserNotFoundException;
 import com.badarak.domain.model.*;
-import com.badarak.domain.port.in.CreateUserUseCase;
-import com.badarak.domain.port.in.DeleteUserUseCase;
-import com.badarak.domain.port.in.GetUserUseCase;
-import com.badarak.domain.port.in.ListUsersUseCase;
+import com.badarak.domain.port.in.*;
 import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +46,8 @@ class UserControllerTest {
     ListUsersUseCase listUsers;
     @MockitoBean
     DeleteUserUseCase deleteUser;
+    @MockitoBean
+    UpdateUserUseCase  updateUser;
 
     @MockitoBean
     UserMapper mapper;
@@ -217,6 +216,60 @@ class UserControllerTest {
         void should_return_400_when_invalid_size() throws Exception {
             mockMvc.perform(get("/api/v1/users").param("size", "200"))
                     .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested @DisplayName("PUT /api/v1/users/{id}")
+    class UpdateEndpoint {
+
+        @Test
+        void should_return_200() throws Exception {
+            final var user = sampleUser();
+            doNothing().when(updateUser).execute(any());
+            when(getUser.execute(any())).thenReturn(user);
+            when(mapper.toUpdateUserCommand(any(), any())).thenCallRealMethod();
+            when(mapper.toUserResponse(user)).thenCallRealMethod();
+
+            mockMvc.perform(put("/api/v1/users/{id}", ID)
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"firstName":"Bob","lastName":"Blabla"}
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(ID.toString()));
+        }
+
+        @Test
+        void should_return_400_when_first_name_missing() throws Exception {
+            mockMvc.perform(put("/api/v1/users/{id}", ID)
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"lastName":"Blabla"}
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_400_when_last_name_missing() throws Exception {
+            mockMvc.perform(put("/api/v1/users/{id}", ID)
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"fistName":"Bob"}
+                                    """))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return_404_when_user_not_found() throws Exception {
+            doThrow(new UserNotFoundException(UID)).when(updateUser).execute(any());
+            when(mapper.toUpdateUserCommand(any(), any())).thenCallRealMethod();
+
+            mockMvc.perform(put("/api/v1/users/{id}", ID)
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"firstName":"NotExist","lastName":"User"}
+                                    """))
+                    .andExpect(status().isNotFound());
         }
     }
 

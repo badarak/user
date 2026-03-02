@@ -1,10 +1,7 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
 import com.badarak.domain.model.UserStatus;
-import com.badarak.infrastructure.adapter.in.web.dto.CreateUserRequest;
-import com.badarak.infrastructure.adapter.in.web.dto.CreateUserResponse;
-import com.badarak.infrastructure.adapter.in.web.dto.UserPageResponse;
-import com.badarak.infrastructure.adapter.in.web.dto.UserResponse;
+import com.badarak.infrastructure.adapter.in.web.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -73,14 +70,17 @@ public interface UserControllerDocumentation {
     })
     ResponseEntity<CreateUserResponse> create(@Valid CreateUserRequest request);
 
-//    @Operation(summary = "Update the given user")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "User updated successfully"),
-//            @ApiResponse(responseCode = "404", description = "Not found user")
-//
-//    })
-//    ResponseEntity<UserResponse> update(@Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id, CreateOrUpdateUserRequest createUserRequest);
-//
+    @Operation(summary = "Update the given user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Not found user")
+
+    })
+    ResponseEntity<UserResponse> update(
+            @Parameter(example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") UUID id,
+            @Valid UpdateUserRequest updateUserRequest
+    );
+
     @Operation(summary = "Delete the given user", description = "Soft-delete : changes the status to INACTIVE.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User disabled"),

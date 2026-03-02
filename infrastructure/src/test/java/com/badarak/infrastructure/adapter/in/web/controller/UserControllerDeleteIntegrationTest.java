@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("DELETE feature — integration tests")
-class DeleteUserIntegrationTest {
+class UserControllerDeleteIntegrationTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -119,9 +119,6 @@ class DeleteUserIntegrationTest {
         void should_update_updatedAt_timestamp_after_delete() throws Exception {
             final var user = persistActive("timestamp@example.com", "Time", "Stamp");
             final var originalUpdatedAt = user.getUpdatedAt();
-
-            Thread.sleep(10);
-
             mockMvc.perform(delete("/api/v1/users/{id}", user.getId().value()));
 
             final var updated = fetchFromRepo(user.getId().value());

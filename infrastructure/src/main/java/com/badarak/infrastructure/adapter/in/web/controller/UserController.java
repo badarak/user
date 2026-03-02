@@ -2,15 +2,9 @@ package com.badarak.infrastructure.adapter.in.web.controller;
 
 import com.badarak.domain.model.UserId;
 import com.badarak.domain.model.UserStatus;
-import com.badarak.domain.port.in.CreateUserUseCase;
-import com.badarak.domain.port.in.DeleteUserUseCase;
-import com.badarak.domain.port.in.GetUserUseCase;
-import com.badarak.domain.port.in.ListUsersUseCase;
+import com.badarak.domain.port.in.*;
 import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
-import com.badarak.infrastructure.adapter.in.web.dto.CreateUserRequest;
-import com.badarak.infrastructure.adapter.in.web.dto.CreateUserResponse;
-import com.badarak.infrastructure.adapter.in.web.dto.UserPageResponse;
-import com.badarak.infrastructure.adapter.in.web.dto.UserResponse;
+import com.badarak.infrastructure.adapter.in.web.dto.*;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +16,7 @@ import java.net.URI;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
+import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
 @Validated
@@ -32,13 +27,22 @@ public class UserController implements UserControllerDocumentation {
     private final GetUserUseCase getUser;
     private final ListUsersUseCase listUsers;
     private final DeleteUserUseCase deleteUser;
+    private final UpdateUserUseCase updateUser;
     private final UserMapper mapper;
 
-    UserController(CreateUserUseCase createUser, GetUserUseCase getUser, ListUsersUseCase listUsers, DeleteUserUseCase deleteUser, UserMapper mapper) {
+    UserController(
+            CreateUserUseCase createUser,
+            GetUserUseCase getUser,
+            ListUsersUseCase listUsers,
+            DeleteUserUseCase deleteUser,
+            UpdateUserUseCase updateUser,
+            UserMapper mapper
+    ) {
         this.createUser = requireNonNull(createUser);
         this.getUser = requireNonNull(getUser);
         this.listUsers = requireNonNull(listUsers);
         this.deleteUser = requireNonNull(deleteUser);
+        this.updateUser = requireNonNull(updateUser);
         this.mapper = requireNonNull(mapper);
     }
 
@@ -63,16 +67,18 @@ public class UserController implements UserControllerDocumentation {
     @GetMapping("/{id}")
     @Override
     public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(mapper.toUserResponse(getUser.execute(new UserId(id))));
+        return ok(mapper.toUserResponse(getUser.execute(new UserId(id))));
     }
 
-//
-//    @PutMapping("/{id}")
-//    @Override
-//    public ResponseEntity<UserResponse> update(@PathVariable("id") UUID id, @RequestBody CreateOrUpdateUserRequest req) {
-//        return ok(of(userService.updateUser(id, req.name(), req.email())));
-//    }
-//
+
+    @PutMapping("/{id}")
+    @Override
+    public ResponseEntity<UserResponse> update(@PathVariable("id") UUID id, @RequestBody UpdateUserRequest req) {
+        UserId userId = new UserId(id);
+        updateUser.execute(mapper.toUpdateUserCommand(userId, req));
+        return ResponseEntity.ok(mapper.toUserResponse(getUser.execute(userId)));
+    }
+
     @DeleteMapping("/{id}")
     @Override
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
@@ -88,6 +94,6 @@ public class UserController implements UserControllerDocumentation {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) UserStatus status) {
 
-        return ResponseEntity.ok(mapper.toPageResponse(listUsers.execute(new UserQuery(page, size, status))));
+        return ok(mapper.toPageResponse(listUsers.execute(new UserQuery(page, size, status))));
     }
 }
