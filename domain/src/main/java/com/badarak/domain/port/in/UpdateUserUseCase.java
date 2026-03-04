@@ -1,11 +1,12 @@
 package com.badarak.domain.port.in;
 
+import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
 
 import static java.lang.String.format;
 
 public interface UpdateUserUseCase {
-    void execute(UpdateUserCommand command);
+    User execute(UpdateUserCommand command);
 
     record UpdateUserCommand(UserId userId, String firstName, String lastName) {
 

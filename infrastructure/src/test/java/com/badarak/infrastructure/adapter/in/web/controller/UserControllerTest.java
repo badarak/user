@@ -5,7 +5,6 @@ import com.badarak.domain.exception.UserAlreadyInactiveException;
 import com.badarak.domain.exception.UserNotFoundException;
 import com.badarak.domain.model.*;
 import com.badarak.domain.port.in.*;
-import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -225,8 +224,7 @@ class UserControllerTest {
         @Test
         void should_return_200() throws Exception {
             final var user = sampleUser();
-            doNothing().when(updateUser).execute(any());
-            when(getUser.execute(any())).thenReturn(user);
+            when(updateUser.execute(any())).thenReturn(user);
             when(mapper.toUpdateUserCommand(any(), any())).thenCallRealMethod();
             when(mapper.toUserResponse(user)).thenCallRealMethod();
 

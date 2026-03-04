@@ -1,5 +1,7 @@
 package com.badarak.application.service;
 
+import com.badarak.domain.model.UserPage;
+import com.badarak.domain.model.UserQuery;
 import com.badarak.domain.port.in.ListUsersUseCase;
 import com.badarak.domain.port.out.UserRepository;
 import org.springframework.stereotype.Service;

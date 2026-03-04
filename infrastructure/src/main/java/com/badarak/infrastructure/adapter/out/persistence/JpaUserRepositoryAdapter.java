@@ -1,10 +1,6 @@
 package com.badarak.infrastructure.adapter.out.persistence;
 
-import com.badarak.domain.model.Email;
-import com.badarak.domain.model.User;
-import com.badarak.domain.model.UserId;
-import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
-import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
+import com.badarak.domain.model.*;
 import com.badarak.domain.port.out.UserRepository;
 import com.badarak.infrastructure.adapter.out.persistence.entity.UserEntity;
 import com.badarak.infrastructure.adapter.out.persistence.mapper.UserEntityMapper;

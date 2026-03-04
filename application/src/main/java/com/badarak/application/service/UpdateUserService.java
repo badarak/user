@@ -1,6 +1,7 @@
 package com.badarak.application.service;
 
 import com.badarak.domain.exception.UserNotFoundException;
+import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserName;
 import com.badarak.domain.port.in.UpdateUserUseCase;
 import com.badarak.domain.port.out.UserRepository;
@@ -19,7 +20,7 @@ public class UpdateUserService implements UpdateUserUseCase {
     }
 
     @Override
-    public void execute(UpdateUserCommand command) {
+    public User execute(UpdateUserCommand command) {
         requireNonNull(command, "command must not be null");
 
         final var user = repository.findById(command.userId())
@@ -27,5 +28,6 @@ public class UpdateUserService implements UpdateUserUseCase {
 
         user.updateName(new UserName(command.firstName(), command.lastName()));
         repository.save(user);
+        return user;
     }
 }
