@@ -1,10 +1,6 @@
 package com.badarak.domain.port.out;
 
-import com.badarak.domain.model.Email;
-import com.badarak.domain.model.User;
-import com.badarak.domain.model.UserId;
-import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
-import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
+import com.badarak.domain.model.*;
 
 import java.util.Optional;
 

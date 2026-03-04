@@ -2,8 +2,8 @@ package com.badarak.infrastructure.adapter.out.persistence;
 
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
+import com.badarak.domain.model.UserQuery;
 import com.badarak.domain.model.UserStatus;
-import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
 import com.badarak.infrastructure.adapter.out.persistence.entity.UserEntity;
 import com.badarak.infrastructure.adapter.out.persistence.mapper.UserEntityMapper;
 import com.badarak.infrastructure.adapter.out.persistence.repository.SpringDataUserRepository;

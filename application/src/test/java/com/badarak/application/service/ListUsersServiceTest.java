@@ -1,8 +1,6 @@
 package com.badarak.application.service;
 
 import com.badarak.domain.model.*;
-import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
-import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
 import com.badarak.domain.port.out.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -134,6 +132,7 @@ class ListUsersServiceTest {
 
         final var result = service.execute(new UserQuery(0, 20, UserStatus.ACTIVE));
 
+        assertThat(result.content()).isNotEmpty();
         assertThat(result.content()).allMatch(u -> u.getStatus() == UserStatus.ACTIVE);
     }
 

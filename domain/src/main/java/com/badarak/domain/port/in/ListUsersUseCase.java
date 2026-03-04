@@ -1,34 +1,8 @@
 package com.badarak.domain.port.in;
 
-import com.badarak.domain.model.User;
-import com.badarak.domain.model.UserStatus;
-
-import java.util.List;
+import com.badarak.domain.model.UserPage;
+import com.badarak.domain.model.UserQuery;
 
 public interface ListUsersUseCase {
-
     UserPage execute(UserQuery query);
-
-
-    record UserQuery(int page, int size, UserStatus status) {
-
-        public UserQuery {
-            if (page < 0) throw new IllegalArgumentException("page must be >= 0");
-            if (size < 1) throw new IllegalArgumentException("size must be >= 1");
-            if (size > 100) throw new IllegalArgumentException("size must be <= 100");
-        }
-
-        public static UserQuery defaultQuery() {
-            return new UserQuery(0, 20, null);
-        }
-    }
-
-    record UserPage(
-            List<User> content,
-            int page,
-            int size,
-            long totalElements,
-            int totalPages
-    ) {
-    }
 }

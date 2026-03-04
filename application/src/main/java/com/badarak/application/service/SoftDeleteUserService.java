@@ -11,12 +11,11 @@ import static java.util.Objects.requireNonNull;
 
 @Service
 @Transactional
-public class DeleteUserService implements DeleteUserUseCase {
+public class SoftDeleteUserService implements DeleteUserUseCase {
     private final UserRepository repository;
 
-    public DeleteUserService(UserRepository repository) {
-        requireNonNull(repository);
-        this.repository = repository;
+    public SoftDeleteUserService(UserRepository repository) {
+        this.repository = requireNonNull(repository, "repository must not be null");
     }
 
     @Override

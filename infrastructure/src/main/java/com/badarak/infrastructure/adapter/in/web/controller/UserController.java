@@ -1,12 +1,13 @@
 package com.badarak.infrastructure.adapter.in.web.controller;
 
 import com.badarak.domain.model.UserId;
+import com.badarak.domain.model.UserQuery;
 import com.badarak.domain.model.UserStatus;
 import com.badarak.domain.port.in.*;
-import com.badarak.domain.port.in.ListUsersUseCase.UserQuery;
 import com.badarak.infrastructure.adapter.in.web.dto.*;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class UserController implements UserControllerDocumentation {
 
     @PostMapping
     @Override
-    public ResponseEntity<CreateUserResponse> create(@RequestBody CreateUserRequest req) {
+    public ResponseEntity<CreateUserResponse> create(@Valid @RequestBody CreateUserRequest req) {
 
         final var command = mapper.toCommand(req);
         final var userId = createUser.execute(command);
@@ -73,10 +74,13 @@ public class UserController implements UserControllerDocumentation {
 
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<UserResponse> update(@PathVariable("id") UUID id, @RequestBody UpdateUserRequest req) {
+    public ResponseEntity<UserResponse> update(@PathVariable("id") UUID id, @Valid @RequestBody UpdateUserRequest req) {
         UserId userId = new UserId(id);
-        updateUser.execute(mapper.toUpdateUserCommand(userId, req));
-        return ResponseEntity.ok(mapper.toUserResponse(getUser.execute(userId)));
+        return ResponseEntity.ok(
+                mapper.toUserResponse(
+                        updateUser.execute(mapper.toUpdateUserCommand(userId, req))
+                )
+        );
     }
 
     @DeleteMapping("/{id}")

@@ -3,8 +3,8 @@ package com.badarak.infrastructure.adapter.in.web.mapper;
 
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserId;
+import com.badarak.domain.model.UserPage;
 import com.badarak.domain.port.in.CreateUserUseCase.CreateUserCommand;
-import com.badarak.domain.port.in.ListUsersUseCase.UserPage;
 import com.badarak.domain.port.in.UpdateUserUseCase.UpdateUserCommand;
 import com.badarak.infrastructure.adapter.in.web.dto.*;
 import org.springframework.stereotype.Component;
