@@ -18,6 +18,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.time.temporal.ChronoUnit.HOURS;
@@ -41,16 +42,41 @@ public final class JwtTestFactory {
     }
 
     public static String validToken() {
+        return token(claims -> {
+        });
+    }
+
+    public static String token(Consumer<JwtClaimsSet.Builder> claimsCustomizer) {
+        return sign(ENCODER, claimsCustomizer);
+    }
+
+    public static String tokenSignedWithUnknownKey() {
+        return sign(encoder(generateRsaKeyPair()), claims -> {
+        });
+    }
+
+    public static String unsignedToken() {
+        final var base64Url = Base64.getUrlEncoder().withoutPadding();
+        final var header = """
+                {"alg":"none"}""";
+        final var payload = """
+                {"iss":"%s","aud":["%s"],"sub":"test-user","exp":%d}"""
+                .formatted(ISSUER, AUDIENCE, Instant.now().plus(1, HOURS).getEpochSecond());
+        return base64Url.encodeToString(header.getBytes(US_ASCII)) + "."
+                + base64Url.encodeToString(payload.getBytes(US_ASCII)) + ".";
+    }
+
+    private static String sign(JwtEncoder encoder, Consumer<JwtClaimsSet.Builder> claimsCustomizer) {
         final var now = Instant.now();
         final var claims = JwtClaimsSet.builder()
                 .issuer(ISSUER)
                 .audience(List.of(AUDIENCE))
                 .subject("test-user")
                 .issuedAt(now)
-                .expiresAt(now.plus(1, HOURS))
-                .build();
+                .expiresAt(now.plus(1, HOURS));
+        claimsCustomizer.accept(claims);
         final var header = JwsHeader.with(SignatureAlgorithm.RS256).build();
-        return ENCODER.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+        return encoder.encode(JwtEncoderParameters.from(header, claims.build())).getTokenValue();
     }
 
     private static KeyPair generateRsaKeyPair() {
