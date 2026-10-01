@@ -37,6 +37,12 @@ spring:
     password: ${RABBITMQ_PASSWORD}
 
 
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 management:
   endpoints:
     web:

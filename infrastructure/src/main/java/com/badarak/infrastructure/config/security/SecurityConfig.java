@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -38,8 +40,21 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
     private static final String USERS_PATHS = "/api/v1/users/**";
+    private static final String[] API_DOCS_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
     private static final String READ_USERS = "SCOPE_users:read";
     private static final String WRITE_USERS = "SCOPE_users:write";
+
+    @Bean
+    @Order(1)
+    @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
+    SecurityFilterChain apiDocsSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher(API_DOCS_PATHS)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .build();
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
