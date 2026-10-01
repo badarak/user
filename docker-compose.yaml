@@ -6,8 +6,8 @@ services:
       container_name: userdb
       environment:
         POSTGRES_DB: users
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
+        POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
+        POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       ports:
         - "5432:5432"
       volumes:
@@ -17,8 +17,8 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
     ports:
       - "5672:5672"    # AMQP communication
       - "15672:15672"  # Web UI

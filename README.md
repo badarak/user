@@ -18,6 +18,7 @@ Install and Run
 ```
 mvn clean install
 
+cp .env.example .env   # then set the credentials
 docker-compose up
 ```
 - swagger
