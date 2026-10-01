@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.HOURS;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.params.provider.Arguments.argumentSet;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,17 +36,22 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.WWW_AUTHENTICATE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
 @Import({SecurityConfig.class, JwtTestProperties.class})
 @DisplayName("UserController — authentication and authorization")
 class UserControllerSecurityTest {
+    private static final String UNAUTHORIZED_DETAIL = "A valid bearer token is required to access this resource.";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -65,7 +72,13 @@ class UserControllerSecurityTest {
     void should_return_401_with_bearer_challenge_when_no_token() throws Exception {
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(header().string(WWW_AUTHENTICATE, startsWith("Bearer")));
+                .andExpect(header().string(WWW_AUTHENTICATE, startsWith("Bearer")))
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.type").value(endsWith("/unauthorized")))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         verifyNoInteractions(listUsers);
     }
@@ -117,7 +130,9 @@ class UserControllerSecurityTest {
         mockMvc.perform(get("/api/v1/users")
                         .header(AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isUnauthorized())
-                .andExpect(header().string(WWW_AUTHENTICATE, containsString("error=\"invalid_token\"")));
+                .andExpect(header().string(WWW_AUTHENTICATE, containsString("error=\"invalid_token\"")))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.detail").value(UNAUTHORIZED_DETAIL));
 
         verifyNoInteractions(listUsers);
     }
@@ -146,7 +161,11 @@ class UserControllerSecurityTest {
     void should_return_403_when_scope_is_insufficient(String scope, MockHttpServletRequestBuilder request) throws Exception {
         mockMvc.perform(request.header(AUTHORIZATION, bearerWithScope(scope)))
                 .andExpect(status().isForbidden())
-                .andExpect(header().string(WWW_AUTHENTICATE, containsString("error=\"insufficient_scope\"")));
+                .andExpect(header().string(WWW_AUTHENTICATE, containsString("error=\"insufficient_scope\"")))
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.title").value("Forbidden"))
+                .andExpect(jsonPath("$.type").value(endsWith("/forbidden")));
 
         verifyNoInteractions(createUser, getUser, listUsers, deleteUser, updateUser);
     }
@@ -166,6 +185,17 @@ class UserControllerSecurityTest {
         mockMvc.perform(delete("/api/v1/users/{id}", UUID.randomUUID())
                         .header(AUTHORIZATION, bearerWithScope("users:write")))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void should_return_403_problem_instead_of_500_when_access_denied_is_raised_behind_the_controller() throws Exception {
+        when(getUser.execute(any())).thenThrow(new AccessDeniedException("denied"));
+
+        mockMvc.perform(get("/api/v1/users/{id}", UUID.randomUUID())
+                        .header(AUTHORIZATION, "Bearer " + JwtTestFactory.validToken()))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Forbidden"));
     }
 
     private static String bearerWithScope(String scope) {

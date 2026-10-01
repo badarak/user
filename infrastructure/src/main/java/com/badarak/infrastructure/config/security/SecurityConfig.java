@@ -1,5 +1,6 @@
 package com.badarak.infrastructure.config.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +39,8 @@ public class SecurityConfig {
     private static final String WRITE_USERS = "SCOPE_users:write";
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
+        final var problemDetailHandler = new ProblemDetailSecurityHandler(objectMapper);
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -52,7 +54,13 @@ public class SecurityConfig {
                         .requestMatchers(PUT, USERS_PATHS).hasAuthority(WRITE_USERS)
                         .requestMatchers(DELETE, USERS_PATHS).hasAuthority(WRITE_USERS)
                         .anyRequest().denyAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(problemDetailHandler)
+                        .accessDeniedHandler(problemDetailHandler))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(problemDetailHandler)
+                        .accessDeniedHandler(problemDetailHandler))
                 .build();
     }
 

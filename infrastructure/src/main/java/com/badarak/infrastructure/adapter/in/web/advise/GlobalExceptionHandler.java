@@ -10,20 +10,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.net.URI;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+
+import static com.badarak.infrastructure.adapter.in.web.advise.ProblemDetails.problem;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    private static final String PROBLEM_BASE_URI = "https://badarak.com/problems";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ProblemDetail> onValidation(MethodArgumentNotValidException ex) {
@@ -97,6 +98,11 @@ public class GlobalExceptionHandler {
                 .body(domainProblem(HttpStatus.BAD_REQUEST, "domain-error", "Domain Error", ex));
     }
 
+    @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})
+    void delegateToSecurityFilterChain(RuntimeException ex) {
+        throw ex;
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> onUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
@@ -108,15 +114,6 @@ public class GlobalExceptionHandler {
     private static ProblemDetail domainProblem(HttpStatus httpStatus, String type, String title, DomainException ex) {
         final var problemDetail = problem(httpStatus, type, title, ex.getMessage());
         problemDetail.setProperty("errorCode", ex.errorCode());
-        return problemDetail;
-    }
-
-    private static ProblemDetail problem(HttpStatus httpStatus, String type, String title, String detail) {
-        final var problemDetail = ProblemDetail.forStatus(httpStatus);
-        problemDetail.setType(URI.create(PROBLEM_BASE_URI + "/" + type));
-        problemDetail.setTitle(title);
-        problemDetail.setDetail(detail);
-        problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
 
