@@ -22,12 +22,20 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.List;
 
+import static jakarta.servlet.DispatcherType.ERROR;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
 @EnableWebSecurity
 @EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
+    private static final String USERS_PATHS = "/api/v1/users/**";
+    private static final String READ_USERS = "SCOPE_users:read";
+    private static final String WRITE_USERS = "SCOPE_users:write";
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,7 +45,13 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(ERROR).permitAll()
+                        .requestMatchers(GET, USERS_PATHS).hasAuthority(READ_USERS)
+                        .requestMatchers(POST, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .requestMatchers(PUT, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .requestMatchers(DELETE, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .build();
     }

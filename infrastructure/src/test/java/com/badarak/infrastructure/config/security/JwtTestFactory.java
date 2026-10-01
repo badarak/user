@@ -72,6 +72,7 @@ public final class JwtTestFactory {
                 .issuer(ISSUER)
                 .audience(List.of(AUDIENCE))
                 .subject("test-user")
+                .claim("scope", "users:read users:write")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, HOURS));
         claimsCustomizer.accept(claims);
