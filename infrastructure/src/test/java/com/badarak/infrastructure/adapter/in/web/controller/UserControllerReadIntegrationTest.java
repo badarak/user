@@ -5,6 +5,7 @@ import com.badarak.domain.model.Email;
 import com.badarak.domain.model.User;
 import com.badarak.domain.model.UserName;
 import com.badarak.domain.port.out.UserRepository;
+import com.badarak.infrastructure.config.security.AuthenticatedMockMvcConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @SpringBootTest()
-@Import(TestChannelBinderConfiguration.class)
+@Import({TestChannelBinderConfiguration.class, AuthenticatedMockMvcConfiguration.class})
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)

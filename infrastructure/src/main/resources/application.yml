@@ -41,3 +41,9 @@ logging:
   level:
     root: INFO
     com.badarak: DEBUG
+
+security:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
+    issuer: ${JWT_ISSUER}
+    audience: ${JWT_AUDIENCE}
