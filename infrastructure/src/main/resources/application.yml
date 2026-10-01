@@ -37,6 +37,15 @@ spring:
     password: ${RABBITMQ_PASSWORD}
 
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     root: INFO

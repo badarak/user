@@ -1,6 +1,9 @@
 package com.badarak.infrastructure.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +52,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(ERROR).permitAll()
+                        .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class)).permitAll()
                         .requestMatchers(GET, USERS_PATHS).hasAuthority(READ_USERS)
                         .requestMatchers(POST, USERS_PATHS).hasAuthority(WRITE_USERS)
                         .requestMatchers(PUT, USERS_PATHS).hasAuthority(WRITE_USERS)
