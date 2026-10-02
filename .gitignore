@@ -16,3 +16,6 @@ target/
 *.ipr
 ### Environment ###
 .env
+
+### Keys ###
+*.pem
