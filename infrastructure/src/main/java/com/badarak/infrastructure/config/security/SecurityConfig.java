@@ -22,13 +22,22 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.ByteArrayInputStream;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 
 import static jakarta.servlet.DispatcherType.ERROR;
+import static java.util.List.of;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.HttpHeaders.LOCATION;
+import static org.springframework.http.HttpHeaders.WWW_AUTHENTICATE;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
@@ -37,7 +46,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
 public class SecurityConfig {
     private static final String USERS_PATHS = "/api/v1/users/**";
     private static final String[] API_DOCS_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
@@ -60,6 +69,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         final var problemDetailHandler = new ProblemDetailSecurityHandler(objectMapper);
         return http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -81,6 +91,21 @@ public class SecurityConfig {
                         .authenticationEntryPoint(problemDetailHandler)
                         .accessDeniedHandler(problemDetailHandler))
                 .build();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
+        final var configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(properties.allowedOrigins());
+        configuration.setAllowedMethods(of("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(of(AUTHORIZATION, CONTENT_TYPE));
+        configuration.setExposedHeaders(of(LOCATION, WWW_AUTHENTICATE));
+        configuration.setAllowCredentials(false);
+        configuration.setMaxAge(Duration.ofHours(1));
+
+        final var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 
     @Bean

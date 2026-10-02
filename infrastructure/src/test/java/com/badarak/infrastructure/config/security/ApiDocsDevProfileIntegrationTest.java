@@ -29,10 +29,10 @@ class ApiDocsDevProfileIntegrationTest {
     void should_expose_api_docs_with_bearer_jwt_security_scheme() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.components.securitySchemes.bearer-jwt.type").value("http"))
-                .andExpect(jsonPath("$.components.securitySchemes.bearer-jwt.scheme").value("bearer"))
-                .andExpect(jsonPath("$.components.securitySchemes.bearer-jwt.bearerFormat").value("JWT"))
-                .andExpect(jsonPath("$.security[0].bearer-jwt").isArray());
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
+                .andExpect(jsonPath("$.security[0].bearerAuth").isArray());
     }
 
     @Test
