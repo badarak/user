@@ -1,0 +1,128 @@
+package com.badarak.infrastructure.config.security;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.io.ByteArrayInputStream;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
+import java.util.Base64;
+import java.util.List;
+
+import static jakarta.servlet.DispatcherType.ERROR;
+import static java.util.List.of;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.HttpHeaders.LOCATION;
+import static org.springframework.http.HttpHeaders.WWW_AUTHENTICATE;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
+@Configuration
+@EnableWebSecurity
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
+public class SecurityConfig {
+    private static final String USERS_PATHS = "/api/v1/users/**";
+    private static final String[] API_DOCS_PATHS = {"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
+    private static final String READ_USERS = "SCOPE_users:read";
+    private static final String WRITE_USERS = "SCOPE_users:write";
+
+    @Bean
+    @Order(1)
+    @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
+    SecurityFilterChain apiDocsSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher(API_DOCS_PATHS)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .build();
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
+        final var problemDetailHandler = new ProblemDetailSecurityHandler(objectMapper);
+        return http
+                .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(ERROR).permitAll()
+                        .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class)).permitAll()
+                        .requestMatchers(GET, USERS_PATHS).hasAuthority(READ_USERS)
+                        .requestMatchers(POST, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .requestMatchers(PUT, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .requestMatchers(DELETE, USERS_PATHS).hasAuthority(WRITE_USERS)
+                        .anyRequest().denyAll())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(problemDetailHandler)
+                        .accessDeniedHandler(problemDetailHandler))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(problemDetailHandler)
+                        .accessDeniedHandler(problemDetailHandler))
+                .build();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
+        final var configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(properties.allowedOrigins());
+        configuration.setAllowedMethods(of("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(of(AUTHORIZATION, CONTENT_TYPE));
+        configuration.setExposedHeaders(of(LOCATION, WWW_AUTHENTICATE));
+        configuration.setAllowCredentials(false);
+        configuration.setMaxAge(Duration.ofHours(1));
+
+        final var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(JwtProperties properties) {
+        final var decoder = NimbusJwtDecoder.withPublicKey(rsaPublicKey(properties.publicKey()))
+                .signatureAlgorithm(SignatureAlgorithm.RS256)
+                .build();
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(properties.issuer()),
+                new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
+                        aud -> aud != null && aud.contains(properties.audience()))
+        ));
+        return decoder;
+    }
+
+    private static RSAPublicKey rsaPublicKey(String base64Pem) {
+        final var pem = Base64.getDecoder().decode(base64Pem.trim());
+        return RsaKeyConverters.x509().convert(new ByteArrayInputStream(pem));
+    }
+}

@@ -6,12 +6,15 @@ import com.badarak.domain.exception.UserNotFoundException;
 import com.badarak.domain.model.*;
 import com.badarak.domain.port.in.*;
 import com.badarak.infrastructure.adapter.in.web.mapper.UserMapper;
+import com.badarak.infrastructure.config.security.AuthenticatedMockMvcConfiguration;
+import com.badarak.infrastructure.config.security.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserController.class)
+@Import({SecurityConfig.class, AuthenticatedMockMvcConfiguration.class})
 @DisplayName("UserController — CRUD /api/v1/users")
 class UserControllerTest {
     @Autowired
